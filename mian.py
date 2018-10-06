@@ -12,7 +12,7 @@ def load_slices(log_json, dst_path):
     for item, idx in zip(data_list, range(len(data_list))):
         slice_beg = int(item['bg'])
         slice_end = int(item['ed'])
-        dst_name = os.path.join(dst_path, str(idx)+'.wav')
+        dst_name = os.path.join(dst_path, str(idx) + '.wav')
         yield {
             'beg': slice_beg,
             'end': slice_end,
@@ -29,7 +29,7 @@ def export_audio(audio, file_name, info, format='wav'):
     file_dir = os.path.dirname(file_name)
     os.makedirs(file_dir, exist_ok=True)
     audio.export(file_name, format=format)
-    json.dump(info, open(file_name+'.json', 'w'), ensure_ascii=True)
+    json.dump(info, open(file_name + '.json', 'w'), ensure_ascii=True)
 
 
 def slice_audio(audio, slices, cb):
@@ -38,11 +38,27 @@ def slice_audio(audio, slices, cb):
         cb(audio_slice, slice_item["dst_name"], slice_item['info'])
 
 
-def main(json_file, src_audio, dst_path):
+def process_file(json_file, src_audio, dst_path):
     slices = load_slices(json.load(open(json_file)), dst_path)
     audio = load_audio(src_audio)
     slice_audio(audio, slices, export_audio)
 
 
+def process_path(json_path, src_path, dst_path):
+    for path_prefix, dirs, files in os.walk(json_path):
+        for file_name in files:
+            print('[info]', file_name)
+            rel_file_name = os.path.relpath(os.path.join(path_prefix, file_name), json_path)
+            json_file_name = os.path.join(json_path, rel_file_name)
+            src_file_name = os.path.join(src_path, rel_file_name)[:-len('.log')]
+            dst_file_name = os.path.join(dst_path, rel_file_name)[:-len('.log')]
+            if os.path.exists(src_file_name):
+                process_file(json_file_name, src_file_name, dst_file_name)
+
+
+def main(json_path, src_path, dst_path):
+    process_path(json_path, src_path, dst_path)
+
+
 if __name__ == '__main__':
-    main('test/json/新闻联播 2010-08-09 21：00.mp3.log', 'test/mp3/新闻联播 2010-08-09 21：00.mp3', 'test/dst/新闻联播 2010-08-09 21：00.mp3')
+    main('test/json', 'test/mp3/', 'test/dst/')
