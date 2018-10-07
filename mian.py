@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 
 import pydub
 
@@ -39,9 +40,12 @@ def slice_audio(audio, slices, cb):
 
 
 def process_file(json_file, src_audio, dst_path):
-    slices = load_slices(json.load(open(json_file)), dst_path)
-    audio = load_audio(src_audio)
-    slice_audio(audio, slices, export_audio)
+    try:
+        slices = load_slices(json.load(open(json_file)), dst_path)
+        audio = load_audio(src_audio)
+        slice_audio(audio, slices, export_audio)
+    except Exception as e:
+        traceback.print_exc()
 
 
 def process_path(json_path, src_path, dst_path):
